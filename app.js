@@ -32,8 +32,11 @@ var bird;
 let hasLanded = false;
 let cursors;
 let hasBumped = false; 
+let isGameStarted = false;
+let messageToPlayer;
 
 function create() {
+
     const background = this.add.image(0, 0, "background").setOrigin(0, 0);
     const roads = this.physics.add.staticGroup();
 
@@ -43,11 +46,22 @@ function create() {
         setXY: { x: 200, y: 0, stepX: 300 },
     });
 
+    topColumns.children.iterate(child => {
+        child.setScale(0.7);
+        child.refreshBody(); 
+    });
+
     const bottomColumns = this.physics.add.staticGroup({
         key: "column",
         repeat: 1,
         setXY: { x: 350, y: 400, stepX: 300 },
     });
+
+    bottomColumns.children.iterate(child => {
+        child.setScale(0.5);
+        child.refreshBody(); 
+    });
+
 
     const road = roads.create(400, 568, "road").setScale(2).refreshBody();
 
@@ -78,17 +92,42 @@ function create() {
     this.physics.add.collider(bird, topColumns);
     this.physics.add.collider(bird, bottomColumns);
 
+    messageToPlayer = this.add.text(
+        0,
+        0,
+        `Instructions: Press space bar to start`,
+        {
+        fontFamily: '"Comic Sans MS", Times, serif',
+        fontSize: "16px",
+        color: "bleck",
+        }
+    );
+    
+    Phaser.Display.Align.In.BottomCenter(messageToPlayer, background, 0, 50);
+
 
 }
 
 function update() {
-  if (cursors.up.isDown && !hasLanded && !hasBumped) {
-    bird.setVelocityY(-160);
-  }
+    if (cursors.space.isDown && !isGameStarted) {
+        isGameStarted = true;
+        messageToPlayer.text =
+        'Instructions: Press the "^" button to stay upright\nAnd don\'t hit the columns or ground';
+    }
+    if (!isGameStarted) {
+        bird.setVelocityY(-160);
+    }
+    if (!hasLanded || !hasBumped) {
+        bird.body.velocity.x = 50;
+    }
 
-  if (!hasLanded && !hasBumped) {
-    bird.body.velocity.x = 50;
-  } else {
-    bird.body.velocity.x = 0;
-  }
+    if (hasLanded || hasBumped || !isGameStarted) {
+        bird.body.velocity.x = 0;
+    }
+
+    if (bird.x > 750) {
+        bird.setVelocityY(40);
+        messageToPlayer.text = `Congrats! You won!`;
+    }
+
 }
